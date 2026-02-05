@@ -8,6 +8,6 @@ class Settings:
     AWS_ACCESS_KEY_ID: str = os.getenv("AWS_ACCESS_KEY_ID", "local")
     AWS_SECRET_ACCESS_KEY: str = os.getenv("AWS_SECRET_ACCESS_KEY", "local")
     DYNAMODB_ENDPOINT: str = os.getenv("DYNAMODB_ENDPOINT_URL", "http://localhost:8000")
-    TABLE_NAME: str = "user_permissions"
+    TABLE_NAME: str = "user_permissionsv2"
 
 settings = Settings()

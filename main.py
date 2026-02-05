@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends
 
 from permissions_repository import PermissionsRepository
-from schemas import UserPermissionRequest, UserPermissionResponse
+from schemas import UpdatePermissionsRequest, UpdatePermissionsResponse, UserPermissionRequest, UserPermissionResponse
 from database import get_db_table
 
 app = FastAPI()
@@ -20,9 +20,28 @@ def get_user_permissions(
         raise HTTPException(status_code=400, detail="Username cannot be empty")
     
     items = repo.get_permissions_by_username(request.username)
-    permissions = [item["permission"] for item in items if "permission" in item]
+    permissions = items[0].get("permissions", []) if items else []
+
     
     return UserPermissionResponse(
-        user=request.username,
+        username=request.username,
         permissions=permissions
+    )
+    
+@app.put("/user/permissions", response_model=UpdatePermissionsResponse)
+def update_user_permissions(
+    request: UpdatePermissionsRequest, 
+    repo: PermissionsRepository = Depends(get_repository)
+):
+    if not request.username.strip():
+        raise HTTPException(status_code=400, detail="Username cannot be empty")
+
+    
+    repo.update_permissions_by_username(request.username, request.permissions)
+    update_result = repo.update_permissions_by_username(request.username, request.permissions)
+    if not update_result:
+        raise HTTPException(status_code=404, detail="User not found")
+    return UpdatePermissionsResponse(
+        username=request.username,
+        permissions=request.permissions
     )

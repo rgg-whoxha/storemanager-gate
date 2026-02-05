@@ -4,6 +4,10 @@ from typing import List
 class UserPermissionRequest(BaseModel):
     username: str
 
-class UserPermissionResponse(BaseModel):
-    user: str
+class UserPermissions(BaseModel):
+    username: str
     permissions: List[str]
+
+UserPermissionResponse = UserPermissions
+UpdatePermissionsRequest = UserPermissions
+UpdatePermissionsResponse = UserPermissions
