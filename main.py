@@ -10,6 +10,7 @@ from schemas import (
     UserPermissionResponse
 )
 from database import get_db_table
+from mangum import Mangum 
 
 app = FastAPI()
 
@@ -75,4 +76,4 @@ def create_user(
         username=created_user.get("username", request.username),
         permissions=created_user.get("permissions", [])
     )
-    
+handler = Mangum(app)
