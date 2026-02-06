@@ -1,30 +1,42 @@
 from fastapi import FastAPI, HTTPException, Depends
 
 from permissions_repository import PermissionsRepository
-from schemas import UpdatePermissionsRequest, UpdatePermissionsResponse, UserPermissionRequest, UserPermissionResponse
+from exceptions import UserAlreadyExistsError, UserNotFoundError
+from schemas import (
+    CreateUserRequest, 
+    CreateUserResponse,
+    UpdatePermissionsRequest, 
+    UpdatePermissionsResponse, 
+    UserPermissionResponse
+)
 from database import get_db_table
 
 app = FastAPI()
+
+# Error messages
+MSG_USERNAME_EMPTY = "Username cannot be empty"
+MSG_USER_NOT_FOUND = "User not found"
+MSG_USER_ALREADY_EXISTS = "User already exists"
 
 
 def get_repository():
     table = get_db_table()
     return PermissionsRepository(table)
 
-@app.post("/user/permissions", response_model=UserPermissionResponse)
+@app.get("/user/permissions", response_model=UserPermissionResponse)
 def get_user_permissions(
-    request: UserPermissionRequest, 
+    username: str,
     repo: PermissionsRepository = Depends(get_repository)
 ):
-    if not request.username.strip():
-        raise HTTPException(status_code=400, detail="Username cannot be empty")
+    if not username.strip():
+        raise HTTPException(status_code=400, detail=MSG_USERNAME_EMPTY)
     
-    items = repo.get_permissions_by_username(request.username)
+    items = repo.get_permissions_by_username(username)
     permissions = items[0].get("permissions", []) if items else []
 
     
     return UserPermissionResponse(
-        username=request.username,
+        username=username,
         permissions=permissions
     )
     
@@ -34,14 +46,33 @@ def update_user_permissions(
     repo: PermissionsRepository = Depends(get_repository)
 ):
     if not request.username.strip():
-        raise HTTPException(status_code=400, detail="Username cannot be empty")
+        raise HTTPException(status_code=400, detail=MSG_USERNAME_EMPTY)
 
+    try:
+        repo.update_permissions_by_username(request.username, request.permissions)
+    except UserNotFoundError:
+        raise HTTPException(status_code=404, detail=MSG_USER_NOT_FOUND)
     
-    repo.update_permissions_by_username(request.username, request.permissions)
-    update_result = repo.update_permissions_by_username(request.username, request.permissions)
-    if not update_result:
-        raise HTTPException(status_code=404, detail="User not found")
     return UpdatePermissionsResponse(
         username=request.username,
         permissions=request.permissions
     )
+
+@app.post("/user", response_model=CreateUserResponse)
+def create_user(
+    request: CreateUserRequest,
+    repo: PermissionsRepository = Depends(get_repository)
+):
+    if not request.username.strip():
+        raise HTTPException(status_code=400, detail=MSG_USERNAME_EMPTY)
+    
+    try:
+        created_user = repo.create_user(request.username, request.permissions)
+    except UserAlreadyExistsError:
+        raise HTTPException(status_code=409, detail=MSG_USER_ALREADY_EXISTS)
+    
+    return CreateUserResponse(
+        username=created_user.get("username", request.username),
+        permissions=created_user.get("permissions", [])
+    )
+    

@@ -32,8 +32,8 @@ cp .env.example .env
 
 | Variable                | Description       | Default                 |
 | ----------------------- | ----------------- | ----------------------- |
-| `AWS_ACCESS_KEY_ID`     | AWS access key    | -                       |
-| `AWS_SECRET_ACCESS_KEY` | AWS secret key    | -                       |
+| `AWS_ACCESS_KEY_ID`     | AWS access key    | `local`                 |
+| `AWS_SECRET_ACCESS_KEY` | AWS secret key    | `local`                 |
 | `AWS_DEFAULT_REGION`    | AWS region        | `us-east-1`             |
 | `DYNAMODB_ENDPOINT_URL` | DynamoDB endpoint | `http://localhost:8000` |
 
@@ -49,43 +49,97 @@ docker-compose up -d
 uvicorn main:app --reload
 ```
 
+Or use FastAPI's development server:
+
+```bash
+fastapi dev main.py
+```
+
 The API will be available at `http://localhost:8000`.
 
 ## API Endpoints
 
-### Get User Permissions
+### Create User
 
 ```http
-POST /user/permissions
+POST /user
 Content-Type: application/json
 
 {
-  "username": "user@example.com"
+  "username": "john",
+  "permissions": ["read", "write"]
 }
 ```
 
-**Response:**
+**Response (200):**
 
 ```json
 {
-  "user": "user@example.com",
-  "permissions": [...]
+  "username": "john",
+  "permissions": ["read", "write"]
 }
 ```
+
+**Error (409):** User already exists
+
+---
+
+### Get User Permissions
+
+```http
+GET /user/permissions?username=john
+```
+
+**Response (200):**
+
+```json
+{
+  "username": "john",
+  "permissions": ["read", "write"]
+}
+```
+
+---
+
+### Update User Permissions
+
+```http
+PUT /user/permissions
+Content-Type: application/json
+
+{
+  "username": "john",
+  "permissions": ["read", "write", "delete"]
+}
+```
+
+**Response (200):**
+
+```json
+{
+  "username": "john",
+  "permissions": ["read", "write", "delete"]
+}
+```
+
+**Error (404):** User not found
+
+---
 
 ## Project Structure
 
 ```
-├── main.py                    # FastAPI application entry point
+├── main.py                    # FastAPI application & routes
 ├── config.py                  # Configuration settings
 ├── database.py                # DynamoDB connection
 ├── permissions_repository.py  # Data access layer
 ├── schemas.py                 # Pydantic models
+├── exceptions.py              # Custom exceptions
 ├── docker-compose.yml         # Local DynamoDB setup
-└── requirements.txt           # Python dependencies
+├── requirements.txt           # Python dependencies
+└── .vscode/
+    └── launch.json            # VS Code debug configuration
 ```
-
-## Development
 
 ### API Documentation
 

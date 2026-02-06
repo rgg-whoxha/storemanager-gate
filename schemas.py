@@ -1,8 +1,6 @@
 from pydantic import BaseModel
 from typing import List
 
-class UserPermissionRequest(BaseModel):
-    username: str
 
 class UserPermissions(BaseModel):
     username: str
@@ -11,3 +9,5 @@ class UserPermissions(BaseModel):
 UserPermissionResponse = UserPermissions
 UpdatePermissionsRequest = UserPermissions
 UpdatePermissionsResponse = UserPermissions
+CreateUserRequest = UserPermissions
+CreateUserResponse = UserPermissions
