@@ -19,7 +19,7 @@ class StoremanagerStack(Stack):
             self, "user_permissions_handler",
             runtime=_lambda.Runtime.PYTHON_3_9,
             handler="main.handler", 
-            code=_lambda.Code.from_asset(".")          )
+            code=_lambda.Code.from_asset("backend")          )
 
         table.grant_read_write_data(storemanager_lambda)
 

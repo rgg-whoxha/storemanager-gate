@@ -1,7 +1,7 @@
 import logging
 from typing import Any
 from botocore.exceptions import ClientError
-from boto3.dynamodb.conditions import Key
+
 from exceptions import UserAlreadyExistsError, UserNotFoundError
 
 logger = logging.getLogger(__name__)
@@ -10,12 +10,12 @@ class PermissionsRepository:
     def __init__(self, table):
         self.table = table
 
-    def get_permissions_by_username(self, username: str) -> list[dict[str, Any]]:
+    def get_permissions_by_username(self, username: str) :
         try:
-            response = self.table.query(
-                KeyConditionExpression=Key("username").eq(username)
+            response = self.table.get_item(
+                Key={"username": username}
             )
-            return response.get("Items", [])
+            return response.get("Item", {})
         except ClientError as err:
             logger.error(
                 "DB Error querying username %s: %s",
@@ -47,17 +47,18 @@ class PermissionsRepository:
 
     def create_user(self, username: str, permissions: list[str]) -> dict[str, Any]:
         try:
+            normalized_permissions = permissions if permissions else []
 
             self.table.put_item(
                 Item={
                     "username": username,
-                    "permissions": permissions if permissions else []
+                    "permissions": normalized_permissions
                 },
                 ConditionExpression="attribute_not_exists(username)"
             )
             return {
                 "username": username,
-                "permissions": permissions if permissions else []
+                "permissions": normalized_permissions
             }
         except ClientError as err:
             if err.response["Error"]["Code"] == "ConditionalCheckFailedException":

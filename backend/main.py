@@ -33,7 +33,7 @@ def get_user_permissions(
         raise HTTPException(status_code=400, detail=MSG_USERNAME_EMPTY)
     
     items = repo.get_permissions_by_username(username)
-    permissions = items[0].get("permissions", []) if items else []
+    permissions = items.get("permissions", []) if items else []
 
     
     return UserPermissionResponse(
